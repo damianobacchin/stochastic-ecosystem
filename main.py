@@ -1,7 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from time import time
+import random
+
 from species import chain, ecosystem, init
 from species import Animal, Plant
+
 
 
 class Model:
@@ -105,15 +109,34 @@ class Model:
             index += self.propensities[select]
             select += 1
         return select-1
+    
+    def tau_leaping(self, tau):
+        products_vector = []
+        for i, reaction in enumerate(self.parameters):
+            _lambda = self.propensities[i] * tau
+            if _lambda<5:
+                n_reactions = np.random.poisson(_lambda)
+            else:
+                n_reactions = -1
+                while n_reactions<0:
+                    n_reactions = np.random.normal(_lambda, np.sqrt(_lambda))
+            products_vector.append(n_reactions)
+        return products_vector
 
     def step(self):
         self.update_propensities()
         if self.a0 == 0:
             return self.time, self.state.copy()
         tau = self.calc_tau()
-        tx_idx = self.get_next_reaction()
         self.time += tau
-        self.state += self.products[tx_idx]
+        if tau>5e-8:
+            tx_idx = self.get_next_reaction()
+            self.state += self.products[tx_idx]
+        else:
+            products_vector = self.tau_leaping(tau)
+            for i, n_reactions in enumerate(products_vector):
+                self.state += self.products[i] * n_reactions
+
         return self.time, self.state.copy()
     
     def simulate(self, tmax=0.5):
@@ -127,12 +150,14 @@ class Model:
 
 
 if __name__=='__main__':
-    
+
+    fig, ax = plt.subplots(1, 1)
+
     model = Model()
     times, states = model.simulate()
 
-    fig, ax = plt.subplots()
     for n, specie in enumerate(model.species):
         ax.plot(times, states.T[n], label=specie.name)
-    legend = ax.legend(loc='upper right', shadow=True)
+
+    plt.legend(loc='best', shadow=True)
     plt.show()
