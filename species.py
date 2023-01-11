@@ -31,31 +31,20 @@ class Plant(Specie):
 ecosystem = Ecosystem('Ecosystem')
 
 lions = Animal(name='Lions', type='predator', ferocity=.1, growth=.2)
-hyenas = Animal(name='Hyenas', type='predator', ferocity=.2, growth=.1)
+gazelles = Animal(name='Gazelles', type='prey', repletion=.3, growth=.6)
+antelopes = Animal(name='Antelopes', type='prey', repletion=.7, growth=.3)
+grass = Plant(name='Grass', type='plant', growth=0.9)
 
-gazelles = Animal(name='Gazelles', type='prey', repletion=.6, growth=.7)
-zebre = Animal(name='Zebre', type='prey', repletion=.9, growth=.4)
-antelopes = Animal(name='Antelopes', type='prey', repletion=.8, growth=.4)
-
-acacia = Plant(name='Acacia', type='plant', growth=.9)
-ficus = Plant(name='Ficus', type='plant', growth=.9)
-grass = Plant(name='Grass', type='plant', growth=.9)
 
 chain = {
-    lions: [gazelles, zebre],
-    hyenas: [gazelles, antelopes],
-    gazelles: [ficus, grass],
-    zebre: [acacia, grass],
+    lions: [gazelles],
+    gazelles: [grass],
     antelopes: [grass]
 }
 
 init = {
     lions: 10,
-    hyenas: 20,
-    gazelles: 40,
-    zebre: 40,
-    antelopes: 60,
-    acacia: 50,
-    ficus: 40,
+    gazelles: 20,
+    antelopes: 40,
     grass: 20
 }

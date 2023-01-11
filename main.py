@@ -40,6 +40,7 @@ class Model:
                 self.parameters.append(predator.param)
 
         # Multiplying
+        self.mult_idx = len(self.parameters)
         for specie in self.species:
             reaction_reactants = np.zeros(len(self.species))
             reaction_products = np.zeros(len(self.species))
@@ -93,7 +94,7 @@ class Model:
             if type(specie) == Plant:
                 continue
             idx = self.species.index(specie)
-            self.parameters[self.starv_idx + i] = self.state[idx] / (sum([ self.state[self.species.index(prey)] for prey in chain[specie] ]) +1)
+            self.parameters[self.starv_idx + i] = self.state[idx] / (sum([ self.state[self.species.index(prey)] for prey in chain[specie] ]) +0.1)
         for i in range(len(self.parameters)):
             self.propensities[i] = self.get_h(i) * self.parameters[i]
         self.a0 = sum(self.propensities)
@@ -129,6 +130,12 @@ class Model:
             return self.time, self.state.copy()
         tau = self.calc_tau()
         self.time += tau
+        if self.time>0.4:
+            for i, plant in enumerate(self.species):
+                if type(plant) != Plant:
+                    continue
+            self.parameters[self.mult_idx + i] = 10 * plant.growth
+
         if tau>5e-8:
             tx_idx = self.get_next_reaction()
             self.state += self.products[tx_idx]
@@ -139,7 +146,7 @@ class Model:
 
         return self.time, self.state.copy()
     
-    def simulate(self, tmax=0.5):
+    def simulate(self, tmax=1):
         times = []
         states = []
         while self.time <= tmax:
@@ -152,12 +159,16 @@ class Model:
 if __name__=='__main__':
 
     fig, ax = plt.subplots(1, 1)
+    # get_colors = lambda n: ["#%06x" % random.randint(0, 0xFFFFFF) for _ in range(n)]
+    # colors = get_colors(10)
+    colors = [ "red", "blue", "green", "purple", "orange", "white", "black" ]
 
-    model = Model()
-    times, states = model.simulate()
-
-    for n, specie in enumerate(model.species):
-        ax.plot(times, states.T[n], label=specie.name)
-
-    plt.legend(loc='best', shadow=True)
+    for i in range(5):
+        model = Model()
+        times, states = model.simulate()
+        
+        for n, specie in enumerate(model.species):
+            ax.plot(times, states.T[n], alpha=0.2, color=colors[n])
+            
+    plt.legend([specie.name for specie in model.species], loc='best', shadow=True)
     plt.show()
