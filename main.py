@@ -7,10 +7,9 @@ from species import chain, ecosystem, init
 from species import Animal, Plant
 
 
-
 class Model:
     def __init__(self):
-        # Generate network-based reactions
+        
         self.species = []
         self.reactants = []
         self.products = []
@@ -25,56 +24,43 @@ class Model:
             if type(specie) == Plant:
                 self.species.append(specie)
 
-        # Eating
-        for predator, preys in chain.items():
-            for prey in preys:
-                reaction_reactants = np.zeros(len(self.species))
-                reaction_products = np.zeros(len(self.species))
-
-                reaction_reactants[self.species.index(predator)] = 1
-                reaction_reactants[self.species.index(prey)] = 1
-                reaction_products[self.species.index(prey)] = -1
-
-                self.reactants.append(reaction_reactants)
-                self.products.append(reaction_products)
-                self.parameters.append(predator.param)
-
-        # Multiplying
-        self.mult_idx = len(self.parameters)
-        for specie in self.species:
-            reaction_reactants = np.zeros(len(self.species))
-            reaction_products = np.zeros(len(self.species))
-
-            reaction_reactants[self.species.index(specie)] = 2
-            reaction_products[self.species.index(specie)] = 1
-
-            self.reactants.append(reaction_reactants)
-            self.products.append(reaction_products)
-            self.parameters.append(1000 * specie.growth)
-        
         # Initial state
         self.state = np.zeros(len(self.species))
         for specie, num in init.items():
             self.state[self.species.index(specie)] = num
+        
+        # GENERATE NETWORK-BASED REACTIONS
+        # Eating
+        for predator, preys in chain.items():
+            for prey in preys:
+                self.add_reaction( { predator: 1, prey: 1 }, { prey: -1 }, predator.param )
+
+        # Multiplying
+        self.mult_idx = len(self.parameters)
+        for specie in self.species:
+            self.add_reaction( { specie: 2 }, { specie: 1 }, 1000*specie.growth )
         
         # Starvation
         self.starv_idx = len(self.parameters)
         for specie in self.species:
             if type(specie) == Plant:
                 continue
-            reaction_reactants = np.zeros(len(self.species))
-            reaction_products = np.zeros(len(self.species))
-
-            reaction_reactants[self.species.index(specie)] = 1
-            reaction_products[self.species.index(specie)] = -1
-
-            self.reactants.append(reaction_reactants)
-            self.products.append(reaction_products)
             starv_rate = self.state[self.species.index(specie)] / sum([ self.state[self.species.index(prey)] for prey in chain[specie] ])
-            self.parameters.append(starv_rate)
+            self.add_reaction( { specie: 1 }, { specie: -1 }, starv_rate )
         
         self.products = np.array(self.products)
         self.propensities = np.zeros(len(self.parameters))
+
+    def add_reaction(self, reactants={}, products={}, param=1):
+        reaction_reactants = np.zeros(len(self.species))
+        reaction_products = np.zeros(len(self.species))
+        for specie in reactants.keys():
+            reaction_reactants[self.species.index(specie)] = reactants[specie]
+        for specie in products.keys():
+            reaction_products[self.species.index(specie)] = products[specie]
+        self.reactants.append(reaction_reactants)
+        self.products.append(reaction_products)
+        self.parameters.append(param)
 
     def get_h(self, index):
         reaction = self.reactants[index]
@@ -130,13 +116,16 @@ class Model:
             return self.time, self.state.copy()
         tau = self.calc_tau()
         self.time += tau
+
+        # Simulate drought
         if self.time>0.4:
             for i, plant in enumerate(self.species):
                 if type(plant) != Plant:
                     continue
-            self.parameters[self.mult_idx + i] = 10 * plant.growth
+                self.parameters[self.mult_idx + i] = 10 * plant.growth
 
-        if tau>5e-8:
+        # Switch from SSA to Tau Leaping
+        if tau > 1/self.a0:
             tx_idx = self.get_next_reaction()
             self.state += self.products[tx_idx]
         else:
@@ -146,7 +135,8 @@ class Model:
 
         return self.time, self.state.copy()
     
-    def simulate(self, tmax=1):
+    # Start the simulation
+    def simulate(self, tmax=2):
         times = []
         states = []
         while self.time <= tmax:
@@ -161,7 +151,7 @@ if __name__=='__main__':
     fig, ax = plt.subplots(1, 1)
     # get_colors = lambda n: ["#%06x" % random.randint(0, 0xFFFFFF) for _ in range(n)]
     # colors = get_colors(10)
-    colors = [ "red", "blue", "green", "purple", "orange", "white", "black" ]
+    colors = [ "red", "blue", "green", "purple", "orange", "white", "black", "cyan" ]
 
     for i in range(5):
         model = Model()
