@@ -22,28 +22,34 @@ class Animal(Specie):
 
 
 class Plant(Specie):
-    def __init__(self, name, type, growth):
-        super().__init__(name, type)
+    def __init__(self, name, growth):
+        super().__init__(name, type='plant')
         self.growth = growth
 
 
 
 ecosystem = Ecosystem('Ecosystem')
 
+# PREDATOR -> name, type=predator, ferocity, growth
 lions = Animal(name='Lions', type='predator', ferocity=.1, growth=.13)
 hyenas = Animal(name='Hyenas', type='predator', ferocity=.2, growth=.1)
+
+# PREY -> name, type=prey, repletion, growth
 gazelles = Animal(name='Gazelles', type='prey', repletion=.3, growth=.6)
 zebre = Animal(name='Zebre', type='prey', repletion=.9, growth=.4)
 antelopes = Animal(name='Antelopes', type='prey', repletion=.9, growth=.9)
-grass = Plant(name='Grass', type='plant', growth=0.6)
-acacia = Plant(name='Acacia', type='plant', growth=.3)
-ficus = Plant(name='Ficus', type='plant', growth=.4)
 
-# key = predator, value = prey
+# PLANT -> name, type=plant, repletion, growth
+grass = Plant(name='Grass', growth=0.6)
+acacia = Plant(name='Acacia', growth=.3)
+ficus = Plant(name='Ficus', growth=.4)
+
+
+# key -> predator, value -> prey
 chain = {
     lions: [gazelles, zebre],
     hyenas: [gazelles, antelopes],
-    gazelles: [ficus, grass],
+    gazelles: [grass, ficus],
     zebre: [acacia, grass],
     antelopes: [grass]
 }

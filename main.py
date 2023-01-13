@@ -149,9 +149,8 @@ class Model:
 if __name__=='__main__':
 
     fig, ax = plt.subplots(1, 1)
-    # get_colors = lambda n: ["#%06x" % random.randint(0, 0xFFFFFF) for _ in range(n)]
-    # colors = get_colors(10)
-    colors = [ "red", "blue", "green", "purple", "orange", "white", "black", "cyan" ]
+    get_colors = lambda n: ["#%06x" % random.randint(0, 0xFFFFFF) for _ in range(n)]
+    colors = get_colors(len(init.keys()))
 
     for i in range(5):
         model = Model()
